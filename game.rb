@@ -1,12 +1,12 @@
 require 'colorize' #gem install colorize
 class Game
-  attr_accessor :board, :user_name
+  attr_accessor :board, :user_name, :user_wins_count, :cpu_wins_count
 
   def initialize
     #Empty 3x3 board
     self.board = {
-			"1"=>"O", "2"=>" ","3"=>" ",
-			"4"=>" ", "5"=>" ", "6"=>" ",
+			"1"=>"X", "2"=>" ","3"=>" ",
+			"4"=>"X", "5"=>" ", "6"=>" ",
 			"7"=>" ", "8"=>" ", "9"=>" "
     }
 
@@ -29,6 +29,8 @@ class Game
     @cpu_name = "R2D2"
     @cpu_value = "O"
     @user_value = "X"
+    self.user_wins_count = 0
+    self.cpu_wins_count = 0
   end
 
   def displayWelcomeTitle
@@ -47,8 +49,8 @@ class Game
 
   def displayUser
     puts ""
-    puts "      #{self.user_name} = #{@user_value.red}"
-    puts "      #{@cpu_name} = #{@cpu_value.blue}"
+    puts "      #{self.user_name} = #{@user_value.red} Wins: #{self.user_wins_count}"
+    puts "      #{@cpu_name} = #{@cpu_value.blue} Wins: #{self.cpu_wins_count}"
   end
 
   def printValue(value)
@@ -80,8 +82,17 @@ class Game
   end
 
   def cpuTurn
-    #make a cpu movement
-    #after that call checkGame(true)
+    pos = rand(2-10).to_s
+    if isValidOption(pos)
+      if self.board[pos] == " "
+        self.board[pos] = @cpu_value
+        checkGame(true)
+      else 
+        cpuTurn
+      end
+    else
+      cpuTurn
+    end
   end
 
   def userTurn(isCalledAfterWrongInput)
@@ -100,16 +111,88 @@ class Game
         invalidMove
       end
     else
-	    invalidInput unless pos == 'exit'
+	    invalidInput unless input == 'exit'
 	  end
   end
 
+  def isOptionComplete(option, value)
+    result = 0
+
+    option.each do |pos|
+      if self.board[pos] == value
+        result+=1
+      end
+    end
+
+    return result == 3
+  end
+
+  def checkIfBoardIsFull
+    result = 0
+    #check if all the positions in the board are taken
+    self.board.each do |key, val|
+      if val != " "
+        result +=1
+      end
+    end
+
+    return result == 9
+  end
+  
   def checkGame(isUserNextMove)
-    #check if board have one winning option
-    if isUserNextMove
-      userTurn
-    else 
-      cpuTurn
+    @win_options.each do |option|
+      #check if user wins 
+      is_user_winner = isOptionComplete(option, @user_value)
+      if is_user_winner
+        finishGame(@user_name)
+        self.user_wins_count += 1
+        @is_game_finished = true
+        break
+      else
+        #check if cpu wins
+        is_cpu_winner = isOptionComplete(option, @cpu_value)
+        if is_cpu_winner
+          finishGame(@cpu_name)
+          self.cpu_wins_count += 1
+          @is_game_finished = true
+          break
+        end
+      end
+    end
+
+    if !@is_game_finished
+      if checkIfBoardIsFull
+        @is_game_finished = true
+        puts "draw"
+      else
+        if isUserNextMove
+          displayBoard
+          userTurn(false)
+        else 
+          displayBoard
+          cpuTurn
+        end
+      end
+    end
+  end
+
+  def finishGame(winner)
+    displayBoard
+    puts "#{winner} is the winner!"
+    puts "Would you like to play again? (yes/no)"
+    STDOUT.flush
+    play_again = gets.chomp
+    if play_again == 'yes'
+      cleanBoard
+      start(false)
+    else
+      puts "Thanks for playing!"
+    end
+  end
+
+  def cleanBoard
+    @available_options.each do |key|
+      self.board[key] = " "
     end
   end
 
@@ -127,13 +210,18 @@ class Game
 	  userTurn(true)
 	end
 
-  def start 
-    displayWelcomeTitle
-    getUserInfo
+  def start(is_new_game)
+    system "clear"
+    if(is_new_game)
+      displayWelcomeTitle
+      getUserInfo
+    end
     displayBoard
     userTurn(false)
   end
 end
 
 newGame = Game.new()
-newGame.start
+newGame.start(true)
+
+
