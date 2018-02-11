@@ -1,12 +1,12 @@
 require 'colorize' #gem install colorize
 class Game
-  attr_accessor :board, :user_name, :user_wins_count, :cpu_wins_count
+  attr_accessor :board, :user_name
 
   def initialize
     #Empty 3x3 board
     self.board = {
-			"1"=>"X", "2"=>" ","3"=>" ",
-			"4"=>"X", "5"=>" ", "6"=>" ",
+			"1"=>" ", "2"=>" ","3"=>" ",
+			"4"=>" ", "5"=>" ", "6"=>" ",
 			"7"=>" ", "8"=>" ", "9"=>" "
     }
 
@@ -29,8 +29,8 @@ class Game
     @cpu_name = "R2D2"
     @cpu_value = "O"
     @user_value = "X"
-    self.user_wins_count = 0
-    self.cpu_wins_count = 0
+    @user_wins_count = 0
+    @cpu_wins_count = 0
   end
 
   def displayWelcomeTitle
@@ -48,9 +48,10 @@ class Game
   end
 
   def displayUser
+    puts @user_wins_count
     puts ""
-    puts "      #{self.user_name} = #{@user_value.red} Wins: #{self.user_wins_count}"
-    puts "      #{@cpu_name} = #{@cpu_value.blue} Wins: #{self.cpu_wins_count}"
+    puts "      #{self.user_name} = #{@user_value.red} Wins: #{@user_wins_count}"
+    puts "      #{@cpu_name} = #{@cpu_value.blue} Wins: #{@cpu_wins_count}"
   end
 
   def printValue(value)
@@ -144,17 +145,17 @@ class Game
       #check if user wins 
       is_user_winner = isOptionComplete(option, @user_value)
       if is_user_winner
-        finishGame(@user_name)
-        self.user_wins_count += 1
         @is_game_finished = true
+        @user_wins_count += 1
+        finishGame(@user_name)
         break
       else
         #check if cpu wins
         is_cpu_winner = isOptionComplete(option, @cpu_value)
         if is_cpu_winner
-          finishGame(@cpu_name)
-          self.cpu_wins_count += 1
           @is_game_finished = true
+          @cpu_wins_count +=1
+          finishGame(@cpu_name)
           break
         end
       end
