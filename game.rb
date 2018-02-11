@@ -1,6 +1,9 @@
 require 'colorize' #gem install colorize
+
+require_relative "Player"
+
 class Game
-  attr_accessor :board, :user_name
+  attr_accessor :board
 
   def initialize
     #Empty 3x3 board
@@ -12,6 +15,8 @@ class Game
 
     #available selectable options 
     @available_options = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    @available_jedi_names = ["Luke Skywalker", "Yoda", "Mace Windu", "Plo Koon", "Obi-Wan Kenobi", "Kit Fisto"]
+    @available_sith_names = ["Darth Vader", "Dooku", "Darth Sidious", "Darth Maul", "Kylo Ren", "Grievous"]
 
     #8 different possible winning combinations
 		@win_options = [
@@ -26,32 +31,56 @@ class Game
     ]
     # variable to control game status
     @is_game_finished = false
-    @cpu_name = "R2D2"
-    @cpu_value = "O"
-    @user_value = "X"
-    @user_wins_count = 0
-    @cpu_wins_count = 0
+    @player = nil
+    @cpu = nil
   end
 
   def displayWelcomeTitle
     puts "*******************************"
     puts "*          Welcome            *"
-    puts "*        Tic Tac Toe          *"
+    puts "*    Star Wars Tic Tac Toe    *"
     puts "*******************************"
   end
 
   def getUserInfo
     puts "What is your name?"
 		STDOUT.flush
-    self.user_name = gets.chomp
+    player_name = gets.chomp
+    getUserRole(player_name)
     system "clear"
   end
 
+  def getUserRole(player_name)
+    puts "Please select your playing Role"
+    puts "Sith ( X )"
+    puts "Jedi ( O )"
+		STDOUT.flush
+    user_role = gets.chomp
+    if user_role.capitalize == "X" || user_role.capitalize == "O"
+      is_user_jedi = user_role.capitalize == "X"
+      player_title = is_user_jedi ? "Jedi Master" : "Lord Sith"
+      @player = Player.new(player_name, player_title, user_role.capitalize)
+      cpu_title = is_user_jedi ? "Lord Sith" : "Jedi Master"
+      cpu_value = is_user_jedi ? "O" : "X"
+      @cpu = Player.new(getCpuName(!is_user_jedi), cpu_title, cpu_value)
+    else
+      puts "Ups, that Role is not valid"
+      getUserRole
+    end
+  end
+
+  def getCpuName(is_cpu_jedi)
+    if is_cpu_jedi
+      return @available_jedi_names.sample
+    else
+      return @available_sith_names.sample
+    end
+  end
+
   def displayUser
-    puts @user_wins_count
     puts ""
-    puts "      #{self.user_name} = #{@user_value.red} Wins: #{@user_wins_count}"
-    puts "      #{@cpu_name} = #{@cpu_value.blue} Wins: #{@cpu_wins_count}"
+    puts "   #{@player.title} #{@player.name} = #{@player.value.red} Wins: #{@player.wins_count}"
+    puts "   #{@cpu.title} #{@cpu.name} = #{@cpu.value.blue} Wins: #{@cpu.wins_count}"
   end
 
   def printValue(value)
@@ -86,7 +115,7 @@ class Game
     pos = rand(2-10).to_s
     if isValidOption(pos)
       if self.board[pos] == " "
-        self.board[pos] = @cpu_value
+        self.board[pos] = @cpu.value
         checkGame(true)
       else 
         cpuTurn
@@ -98,7 +127,7 @@ class Game
 
   def userTurn(isCalledAfterWrongInput)
     if !isCalledAfterWrongInput
-      puts "#{user_name}, please select a position:"
+      puts "#{@player.title} #{@player.name}, please select a position:"
     end
 
 		STDOUT.flush
@@ -106,7 +135,7 @@ class Game
 
     if isValidOption(pos)
       if self.board[pos] == " "
-        self.board[pos] = @user_value
+        self.board[pos] = @player.value
         checkGame(false)
       else 
         invalidMove
@@ -143,19 +172,19 @@ class Game
   def checkGame(isUserNextMove)
     @win_options.each do |option|
       #check if user wins 
-      is_user_winner = isOptionComplete(option, @user_value)
+      is_user_winner = isOptionComplete(option, @player.value)
       if is_user_winner
         @is_game_finished = true
-        @user_wins_count += 1
-        finishGame(@user_name)
+        @player.addWinningGame
+        finishGame(@player)
         break
       else
         #check if cpu wins
-        is_cpu_winner = isOptionComplete(option, @cpu_value)
+        is_cpu_winner = isOptionComplete(option, @cpu.value)
         if is_cpu_winner
           @is_game_finished = true
-          @cpu_wins_count +=1
-          finishGame(@cpu_name)
+          @cpu.addWinningGame
+          finishGame(@cpu)
           break
         end
       end
@@ -179,7 +208,7 @@ class Game
 
   def finishGame(winner)
     displayBoard
-    puts "#{winner} is the winner!"
+    puts "#{winner.title} #{winner.name} is the winner!"
     puts "Would you like to play again? (yes/no)"
     STDOUT.flush
     play_again = gets.chomp
@@ -209,7 +238,16 @@ class Game
     displayBoard
 	  puts "Ups, that position does not exist, please select a new position:"
 	  userTurn(true)
-	end
+  end
+  
+  def firstMove
+    # user_starts = rand() > 0.5
+    # if user_starts
+    userTurn(false)
+    # else
+    #   cpuTurn
+    # end
+  end
 
   def start(is_new_game)
     system "clear"
@@ -218,11 +256,9 @@ class Game
       getUserInfo
     end
     displayBoard
+    #firstMove
     userTurn(false)
   end
 end
-
-newGame = Game.new()
-newGame.start(true)
 
 
