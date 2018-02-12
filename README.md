@@ -14,11 +14,15 @@ Create an Object Oriented tic tac toe application using Ruby.
 
 ## Dependencies
 * colorize `gem install colorize`
+* rspec `gem install rspec`
 
 ## Environment
 * macOS High Sierra v10.13.2
 * Ruby 2.3.3
 
-# Running
+## Running
 * Clone repo
 * `ruby main.rb`
+
+## Unit Testing
+* `rspec`

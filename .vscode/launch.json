@@ -36,7 +36,7 @@
       "type": "Ruby",
       "request": "launch",
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceRoot}/bin/rspec",
+      "program": "${workspaceRoot}/rspec",
       "args": [
         "-I",
         "${workspaceRoot}"
@@ -47,7 +47,7 @@
       "type": "Ruby",
       "request": "launch",
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceRoot}/bin/rspec",
+      "program": "${workspaceRoot}/rspec",
       "args": [
         "-I",
         "${workspaceRoot}",
