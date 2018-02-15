@@ -32,6 +32,7 @@ class Game
     puts "*******************************"
   end
 
+  #take info from console
   def getUserInfo
     puts "What is your name?"
 		STDOUT.flush
@@ -40,6 +41,7 @@ class Game
     system "clear"
   end
 
+  #take info from console and define who is player role
   def getUserRole(player_name)
     puts "Please select your playing Role"
     puts "Sith ( O )"
@@ -55,10 +57,11 @@ class Game
       @cpu = Player.new(getCpuName(!is_user_jedi), cpu_title, cpu_value)
     else
       puts "Ups, that Role is not valid"
-      getUserRole
+      getUserRole(player_name)
     end
   end
 
+  #return an available name for cpu depending on player role
   def getCpuName(is_cpu_jedi)
     if is_cpu_jedi
       return @available_jedi_names.sample
@@ -67,16 +70,18 @@ class Game
     end
   end
 
+  #display player's info 
   def displayUser
     puts ""
-    puts "   #{@player.title} #{@player.name} = #{@player.value.red} Wins: #{@player.wins_count}"
-    puts "   #{@cpu.title} #{@cpu.name} = #{@cpu.value.blue} Wins: #{@cpu.wins_count}"
+    puts "   #{@player.title} #{@player.name} = #{printValue(@player.value)} Wins: #{@player.wins_count}"
+    puts "   #{@cpu.title} #{@cpu.name} = #{printValue(@cpu.value)} Wins: #{@cpu.wins_count}"
   end
 
   def printValue(value)
-    return value == "X" ? value.red : value.blue
+    return value == "O" ? value.red : value.blue
   end
 
+  #prints board on console
   def displayBoard()
     b = self.board
     displayUser
@@ -97,10 +102,12 @@ class Game
     puts ""
   end
 
+  #check if given option is valid
   def isValidOption(opt)
     return @available_options.include? opt
   end
 
+  # return all the available positions
   def getAvailableMovements()
     available_movements = []
     self.board.each do |key, value|
@@ -111,21 +118,15 @@ class Game
     return available_movements
   end
 
+  # get a random position and play on it
   def cpuTurn
     available_movements = getAvailableMovements
     pos = available_movements.sample
-    if isValidOption(pos)
-      if self.board[pos] == " "
-        self.board[pos] = @cpu.value
-        checkGame(true)
-      else 
-        cpuTurn
-      end
-    else
-      cpuTurn
-    end
+    self.board[pos] = @cpu.value
+    checkGame(true)
   end
 
+  # take the movement from user validate the selectionand play on it 
   def userTurn(isCalledAfterWrongInput)
     if !isCalledAfterWrongInput
       puts "#{@player.title} #{@player.name}, please select a position:"
@@ -146,18 +147,7 @@ class Game
 	  end
   end
 
-  def isOptionComplete(option, value)
-    result = 0
-
-    option.each do |pos|
-      if self.board[pos] == value
-        result+=1
-      end
-    end
-
-    return result == 3
-  end
-
+  # check if board is complete
   def checkIfBoardIsFull
     result = 0
     #check if all the positions in the board are taken
@@ -170,6 +160,7 @@ class Game
     return result == 9
   end
 
+  #check if there is a winnig column on board
   def checkVertical(board, value, boardSize)
     index = 1
     isValueEqual = true
@@ -193,6 +184,7 @@ class Game
     return isValueEqual
   end
   
+   #check if there is a winnig row on board
   def checkHorizontal(board, value, boardSize)
     isValueEqual = true
     index = 1
@@ -217,6 +209,7 @@ class Game
     return isValueEqual
   end
   
+  #check if there is a winnig diagonal on board
   def checkFirstDiagonal(board, value, boardSize)
     index = 1
     isValueEqual = true
@@ -232,6 +225,7 @@ class Game
     return isValueEqual
   end
   
+  #check if there is a winnig diagonal on board
   def checkSecondDiagonal(board, value, boardSize)
     index = boardSize
     isValueEqual = true
@@ -247,29 +241,31 @@ class Game
     return isValueEqual
   end
 
+  # take the player value and evaluate all the posible winning options
   def isPlayerWinner(player)
     return checkHorizontal(self.board, player.value, @boardSize) || checkVertical(self.board, player.value, @boardSize) || checkFirstDiagonal(self.board, player.value, @boardSize) || checkSecondDiagonal(self.board, player.value, @boardSize)
   end
   
+  #check if there is a winner player
   def checkGame(isUserNextMove)
     is_user_winner = isPlayerWinner(@player)
     if is_user_winner
       @is_game_finished = true
       @player.addWinningGame
-      finishGame(@player)
+      finishGame(@player, false)
     else
       is_cpu_winner = isPlayerWinner(@cpu)
       if is_cpu_winner
         @is_game_finished = true
         @cpu.addWinningGame
-        finishGame(@cpu)
+        finishGame(@cpu, false)
       end
     end
 
     if !@is_game_finished
       if checkIfBoardIsFull
         @is_game_finished = true
-        puts "draw"
+        finishGame(nil, true)
       else
         if isUserNextMove
           displayBoard
@@ -282,9 +278,15 @@ class Game
     end
   end
 
-  def finishGame(winner)
+  #take the winner player and print result
+  def finishGame(winner, isDraw)
     displayBoard
-    puts "#{winner.title} #{winner.name} is the winner!"
+    if !isDraw
+      puts "***** #{winner.title} #{winner.name} is the winner! *****"
+    else
+      puts "***** Draw: there is no winner! *****"
+    end
+    puts " "
     puts "Would you like to play again? (yes/no)"
     STDOUT.flush
     play_again = gets.chomp
@@ -296,12 +298,14 @@ class Game
     end
   end
 
+  #clean the board for future games
   def cleanBoard
     @available_options.each do |key|
       self.board[key] = " "
     end
   end
 
+  # display on console the error and try again
   def invalidMove
     system "clear"
     displayBoard
@@ -309,6 +313,7 @@ class Game
 	  userTurn(true)
 	end
 
+  # display on console the error and try again
   def invalidInput
     system "clear"
     displayBoard
@@ -316,15 +321,27 @@ class Game
 	  userTurn(true)
   end
 
+  # define randomly who is the first player move
+  def firstMove
+    user_starts = true #rand() > 0.5
+    displayBoard
+    if user_starts
+      userTurn(false)
+    else
+      cpuTurn
+    end
+  end
+
+  #start point
   def start(is_new_game)
     system "clear"
     if(is_new_game)
       displayWelcomeTitle
       getUserInfo
     end
-    displayBoard
-    userTurn(false)
+    firstMove
   end
+
 end
 
 

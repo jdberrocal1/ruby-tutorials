@@ -12,6 +12,13 @@ Create an Object Oriented tic tac toe application using Ruby.
 * The computer does not need to be smart. Randomly selecting an available space is fine.
 * When the game is done, it should announce who the winner is and ask if you want to play again.
 
+## Known Issues
+* After choosing play again option after finishing a game, game stops
+
+## TODOs
+* Fix play again issue
+* Add unit tests to get more coverage
+
 ## Dependencies
 * colorize `gem install colorize`
 * rspec `gem install rspec`
