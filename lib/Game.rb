@@ -18,21 +18,11 @@ class Game
     @available_jedi_names = ["Luke Skywalker", "Yoda", "Mace Windu", "Plo Koon", "Obi-Wan Kenobi", "Kit Fisto"]
     @available_sith_names = ["Darth Vader", "Dooku", "Darth Sidious", "Darth Maul", "Kylo Ren", "Grievous"]
 
-    #8 different possible winning combinations
-		@win_options = [
-			['1', '2', '3'],
-			['4', '5', '6'],
-			['7', '8', '9'],
-			['1', '4', '7'],
-			['2', '5', '8'],
-			['3', '6', '9'],
-			['1', '5', '9'],
-			['7', '5', '3']
-    ]
     # variable to control game status
     @is_game_finished = false
     @player = nil
     @cpu = nil
+    @boardSize = 3
   end
 
   def displayWelcomeTitle
@@ -52,8 +42,8 @@ class Game
 
   def getUserRole(player_name)
     puts "Please select your playing Role"
-    puts "Sith ( X )"
-    puts "Jedi ( O )"
+    puts "Sith ( O )"
+    puts "Jedi ( X )"
 		STDOUT.flush
     user_role = gets.chomp
     if user_role.capitalize == "X" || user_role.capitalize == "O"
@@ -111,8 +101,19 @@ class Game
     return @available_options.include? opt
   end
 
+  def getAvailableMovements()
+    available_movements = []
+    self.board.each do |key, value|
+      if value == " "
+        available_movements.push(key)
+      end
+    end
+    return available_movements
+  end
+
   def cpuTurn
-    pos = rand(2-10).to_s
+    available_movements = getAvailableMovements
+    pos = available_movements.sample
     if isValidOption(pos)
       if self.board[pos] == " "
         self.board[pos] = @cpu.value
@@ -168,25 +169,100 @@ class Game
 
     return result == 9
   end
-  
-  def checkGame(isUserNextMove)
-    @win_options.each do |option|
-      #check if user wins 
-      is_user_winner = isOptionComplete(option, @player.value)
-      if is_user_winner
-        @is_game_finished = true
-        @player.addWinningGame
-        finishGame(@player)
-        break
-      else
-        #check if cpu wins
-        is_cpu_winner = isOptionComplete(option, @cpu.value)
-        if is_cpu_winner
-          @is_game_finished = true
-          @cpu.addWinningGame
-          finishGame(@cpu)
+
+  def checkVertical(board, value, boardSize)
+    index = 1
+    isValueEqual = true
+    while index <= boardSize
+      verticalIndex = index
+      limit = (boardSize * boardSize) - boardSize + index
+      isValueEqual = true
+      while verticalIndex <= limit
+        isValueEqual = board[verticalIndex.to_s] == value
+        if !isValueEqual
           break
         end
+        verticalIndex +=boardSize
+      end
+      if isValueEqual 
+        return isValueEqual
+      end
+      index += 1
+    end
+    
+    return isValueEqual
+  end
+  
+  def checkHorizontal(board, value, boardSize)
+    isValueEqual = true
+    index = 1
+    limit = (boardSize * boardSize) - boardSize + index
+    while index <= limit
+      isValueEqual = true
+      horizontalIndex = index
+      horizontalLimit = index + boardSize - 1
+      while horizontalIndex <= horizontalLimit
+        isValueEqual = board[horizontalIndex.to_s] == value
+        if !isValueEqual
+          break
+        end
+        horizontalIndex += 1
+      end
+      if isValueEqual 
+        return isValueEqual
+      end
+      index += boardSize
+    end
+  
+    return isValueEqual
+  end
+  
+  def checkFirstDiagonal(board, value, boardSize)
+    index = 1
+    isValueEqual = true
+    diagonalLimit = boardSize * boardSize
+    while index <= diagonalLimit
+      isValueEqual = board[index.to_s] == value
+      if !isValueEqual 
+        break
+      end
+      index += boardSize + 1
+    end
+    
+    return isValueEqual
+  end
+  
+  def checkSecondDiagonal(board, value, boardSize)
+    index = boardSize
+    isValueEqual = true
+    diagonalLimit = (boardSize * boardSize) - boardSize + 1
+    while index <= diagonalLimit
+      isValueEqual = board[index.to_s] == value
+      if !isValueEqual 
+        break
+      end
+      index += boardSize - 1
+    end
+    
+    return isValueEqual
+  end
+
+  def isPlayerWinner(player)
+    return checkHorizontal(self.board, player.value, @boardSize) || checkVertical(self.board, player.value, @boardSize) || checkFirstDiagonal(self.board, player.value, @boardSize) || checkSecondDiagonal(self.board, player.value, @boardSize)
+  end
+  
+  def checkGame(isUserNextMove)
+    is_user_winner = isPlayerWinner(@player)
+    if is_user_winner
+      @is_game_finished = true
+      @player.addWinningGame
+      finishGame(@player)
+    else
+      is_cpu_winner = isPlayerWinner(@cpu)
+      if is_cpu_winner
+        @is_game_finished = true
+        @cpu.addWinningGame
+        finishGame(@cpu)
       end
     end
 
@@ -239,15 +315,6 @@ class Game
 	  puts "Ups, that position does not exist, please select a new position:"
 	  userTurn(true)
   end
-  
-  def firstMove
-    # user_starts = rand() > 0.5
-    # if user_starts
-    userTurn(false)
-    # else
-    #   cpuTurn
-    # end
-  end
 
   def start(is_new_game)
     system "clear"
@@ -256,7 +323,6 @@ class Game
       getUserInfo
     end
     displayBoard
-    #firstMove
     userTurn(false)
   end
 end
